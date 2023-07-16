@@ -1,30 +1,46 @@
+const fs = require("fs");
+
 class ProductManager {
-  constructor() {
-    this.products = [];
+  constructor(filePath) {
+    this.path = filePath;
     this.idCounter = 1;
+    this.products = [];
+
+    // Leer el archivo y cargar los productos si existe
+    this.loadProducts();
   }
 
-  addProduct(title, description, price, thumbnail, code, stock) {
-    if (!title || !description || !price || !thumbnail || !code || !stock) {
-      console.error("Todos los campos son obligatorios");
-      return;
+  // Método privado para cargar los productos desde el archivo
+  loadProducts() {
+    try {
+      const data = fs.readFileSync(this.path, "utf8");
+      this.products = JSON.parse(data);
+      // Encontrar el máximo id para continuar con la autoincrementación
+      const maxId = this.products.reduce(
+        (max, product) => Math.max(max, product.id),
+        0
+      );
+      this.idCounter = maxId + 1;
+    } catch (error) {
+      // Si el archivo no existe o está vacío, continuamos con idCounter en 1
+      this.products = [];
     }
+  }
 
-    if (this.products.some((product) => product.code === code)) {
-      console.error(`Ya existe un producto con el código ${code}`);
-      return;
-    }
+  // Método privado para guardar los productos en el archivo
+  saveProducts() {
+    fs.writeFileSync(this.path, JSON.stringify(this.products, null, 2));
+  }
 
-    const item = {
+  addProduct(productData) {
+    // Asignar un id autoincrementable
+    const product = {
       id: this.idCounter++,
-      title,
-      description,
-      price,
-      thumbnail,
-      code,
-      stock,
+      ...productData,
     };
-    this.products.push(item);
+    this.products.push(product);
+    // Guardar en el archivo
+    this.saveProducts();
   }
 
   getProducts() {
@@ -33,35 +49,63 @@ class ProductManager {
 
   getProductById(id) {
     const product = this.products.find((product) => product.id === id);
-    if (product) {
-      return product;
-    } else {
-      return "Not found";
+    return product || null;
+  }
+
+  updateProduct(id, updatedFields) {
+    const index = this.products.findIndex((product) => product.id === id);
+    if (index !== -1) {
+      // Actualizar los campos especificados sin borrar el id
+      this.products[index] = {
+        ...this.products[index],
+        ...updatedFields,
+        id,
+      };
+      // Guardar en el archivo
+      this.saveProducts();
+      return true; // Actualización exitosa
     }
+    return false; // Producto no encontrado
+  }
+
+  deleteProduct(id) {
+    const index = this.products.findIndex((product) => product.id === id);
+    if (index !== -1) {
+      this.products.splice(index, 1);
+      // Guardar en el archivo
+      this.saveProducts();
+      return true; // Eliminación exitosa
+    }
+    return false; // Producto no encontrado
   }
 }
 
-// Ejemplos
-const productManager = new ProductManager();
+// Ejemplo de uso
+const productManager = new ProductManager("productos.json");
 
-productManager.addProduct(
-  "Producto 1",
-  "Descripción producto 1",
-  10.99,
-  "imagen1.jpg",
-  "P1",
-  5
-);
-productManager.addProduct(
-  "Producto 2",
-  "Descripción producto 2",
-  19.99,
-  "imagen2.jpg",
-  "P2",
-  3
-);
+productManager.addProduct({
+  title: "Producto 1",
+  description: "Descripción producto 1",
+  price: 10.99,
+  thumbnail: "imagen1.jpg",
+  code: "P1",
+  stock: 5,
+});
 
 console.log(productManager.getProducts());
 
-console.log(productManager.getProductById(2));
-console.log(productManager.getProductById(4));
+const productToUpdate = {
+  title: "Producto Actualizado",
+  description: "Descripción actualizada",
+  price: 15.99,
+  thumbnail: "imagen2.jpg",
+  code: "P1", // No se puede cambiar el código, ya que es el identificador único
+  stock: 8,
+};
+productManager.updateProduct(1, productToUpdate);
+
+console.log(productManager.getProducts());
+
+productManager.deleteProduct(1);
+
+console.log(productManager.getProducts());
