@@ -6,34 +6,34 @@ class ProductManager {
     this.idCounter = 1;
     this.products = [];
 
-    // Leer el archivo y cargar los productos si existe
+    // Leer el archivo y cargar los productos si es que existe
     this.loadProducts();
   }
 
-  // Método privado para cargar los productos desde el archivo
+  // Cargar los productos desde el archivo
   loadProducts() {
     try {
       const data = fs.readFileSync(this.path, "utf8");
       this.products = JSON.parse(data);
-      // Encontrar el máximo id para continuar con la autoincrementación
+      // Encontrar el máximo id para continuar autoincrementándose
       const maxId = this.products.reduce(
         (max, product) => Math.max(max, product.id),
         0
       );
       this.idCounter = maxId + 1;
     } catch (error) {
-      // Si el archivo no existe o está vacío, continuamos con idCounter en 1
+      // Si el archivo no existe o está vacío, continúa  con idCounter en 1
       this.products = [];
     }
   }
 
-  // Método privado para guardar los productos en el archivo
+  // Guardar los productos en el archivo
   saveProducts() {
     fs.writeFileSync(this.path, JSON.stringify(this.products, null, 2));
   }
 
   addProduct(productData) {
-    // Asignar un id autoincrementable
+    // Se asigna un id autoincrementable
     const product = {
       id: this.idCounter++,
       ...productData,
@@ -55,7 +55,7 @@ class ProductManager {
   updateProduct(id, updatedFields) {
     const index = this.products.findIndex((product) => product.id === id);
     if (index !== -1) {
-      // Actualizar los campos especificados sin borrar el id
+      // Actualizar los campos sin que se borre el id
       this.products[index] = {
         ...this.products[index],
         ...updatedFields,
