@@ -106,6 +106,9 @@ productManager.updateProduct(1, productToUpdate);
 
 console.log(productManager.getProducts());
 
-productManager.deleteProduct(1);
+// productManager.deleteProduct(1);
 
 console.log(productManager.getProducts());
+
+// Export class ProductManager
+module.exports = ProductManager;
